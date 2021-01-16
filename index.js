@@ -5,6 +5,7 @@
 
     var Word = function (executor) {
         let self = this;
+        this.handlers = [];
         executor(function onFullfilled(val) {
             return settlePromise(self, $resolved, val);
         }, function onRejected(reason) {
@@ -19,7 +20,6 @@
 
     Word.prototype._status = $pending;
     Word.prototype._value = '';
-    Word.prototype.handlers = [];
 
     function settlePromise(p, status, value) {
         if (p._status !== $pending) return;
@@ -27,10 +27,7 @@
         p._status = status;
         p._value = value;
 
-        var len = p.handlers.length;
-        var i = 0;
-
-        while (i++ < len) {
+        for (var i = 0, len = p.handlers.length; i < len; ++i) {
             invokeHandler(p, p.handlers[i]);
         }
 
@@ -79,11 +76,11 @@
             }
 
             // 2.2.7.1
-            resolving(p2, x);
+            resolveValue(p2, x);
         });
     }
 
-    function resolving(p, x) {
+    function resolveValue(p, x) {
         var xthen;
 
         if (p === x && x) {
@@ -102,7 +99,7 @@
             }
             if (typeof xthen === 'function') {
                 // 2.3.3.3
-                resolvingThen(xthen, x);
+                resolvePromise(p, xthen, x);
             } else {
                 // 2.3.3.4
                 settlePromise(p, $resolved, x);
@@ -113,7 +110,7 @@
         }
     }
 
-    function resolvingThen(handler, x) {
+    function resolvePromise(p, handler, x) {
         var called = false;
 
         try {
@@ -121,16 +118,17 @@
                 if (called) return;
                 called = true;
 
-                resolving(x, y);
+                resolveValue(p, y);
             }, function onRejected(r) {
                 if (called) return;
                 called = true;
 
-                settlePromise(x, $rejected, r);
+                settlePromise(p, $rejected, r);
             });
         } catch(e) { // 2.3.3.3.4
             if (called) return;
-            settlePromise(x, $rejected, e);
+            settlePromise(p, $rejected, e);
+            called = true;
         }
     }
 
