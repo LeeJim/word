@@ -1,7 +1,11 @@
 let Word = require('./index');
 
-new Word((resolve, reject) => {
+
+let p = new Word((resolve, reject) => {
     resolve(11);
-}).then(console.log, e => {
-    console.log('error', e);
-}).then(console.log);
+})
+
+p.then(console.log)
+p.then(console.log)
+p.then(console.log)
+p.then(console.log)
